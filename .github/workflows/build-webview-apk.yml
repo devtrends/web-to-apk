@@ -36,7 +36,7 @@ jobs:
       - name: Prepare project
         run: |
           cd android-webview-app
-          sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/java/com/example/webviewapp/MainActivity.kt
+          sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/java/net/devtrends/webtoapk/MainActivity.kt
           sed -i "s|WebToAPK|$TITLE|g" app/src/main/res/values/strings.xml
 
       - name: Build release APK

@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       url:
-        description: 'URL to wrap in WebView'
+        description: 'URL to create APK for'
         required: true
 
 jobs:
@@ -21,12 +21,15 @@ jobs:
           distribution: 'temurin'
           java-version: 17
 
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v3
+
       - name: Fetch page title
         run: |
           URL="${{ github.event.inputs.url }}"
           TITLE=$(curl -sL "$URL" | grep -o '<title[^>]*>.*</title>' | sed -E 's/<\/?title>//g' | head -n 1 | xargs)
           if [ -z "$TITLE" ]; then
-            TITLE="MyWebViewApp"
+            TITLE="WebToAPK"
           fi
           echo "TITLE=$TITLE" >> $GITHUB_ENV
 
@@ -34,12 +37,12 @@ jobs:
         run: |
           cd android-webview-app
           sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/java/com/example/webviewapp/MainActivity.kt
-          sed -i "s|MyWebViewApp|$TITLE|g" app/src/main/res/values/strings.xml
+          sed -i "s|WebToAPK|$TITLE|g" app/src/main/res/values/strings.xml
 
       - name: Build release APK
         run: |
           cd android-webview-app
-          ./gradlew assembleRelease
+          gradle assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

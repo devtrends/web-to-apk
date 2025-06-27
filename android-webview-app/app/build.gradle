@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace 'com.example.webviewapp'
+    namespace 'net.devtrends.webtoapk'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.webviewapp"
+        applicationId "net.devtrends.webtoapk"
         minSdk 21
         targetSdk 34
         versionCode 1

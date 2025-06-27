@@ -1,0 +1,48 @@
+name: Build WebView APK
+
+on:
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to wrap in WebView'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Fetch page title
+        run: |
+          URL="${{ github.event.inputs.url }}"
+          TITLE=$(curl -sL "$URL" | grep -o '<title[^>]*>.*</title>' | sed -E 's/<\/?title>//g' | head -n 1 | xargs)
+          if [ -z "$TITLE" ]; then
+            TITLE="MyWebViewApp"
+          fi
+          echo "TITLE=$TITLE" >> $GITHUB_ENV
+
+      - name: Prepare project
+        run: |
+          cd android-webview-app
+          sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/java/com/example/webviewapp/MainActivity.kt
+          sed -i "s|MyWebViewApp|$TITLE|g" app/src/main/res/values/strings.xml
+
+      - name: Build release APK
+        run: |
+          cd android-webview-app
+          ./gradlew assembleRelease
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: webview-app-apk
+          path: android-webview-app/app/build/outputs/apk/release/app-release.apk

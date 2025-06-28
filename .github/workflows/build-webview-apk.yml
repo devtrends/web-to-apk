@@ -6,6 +6,10 @@ on:
       url:
         description: 'URL to create APK for'
         required: true
+      package_suffix:
+        description: 'Package suffix (a unique value if you want to install multiple generated APKs on the same device)'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -23,6 +27,8 @@ jobs:
 
       - name: Setup Gradle
         uses: gradle/gradle-build-action@v3
+        with:
+          cache-disabled: true
 
       - name: Fetch page title
         run: |
@@ -32,6 +38,13 @@ jobs:
             TITLE="WebToAPK"
           fi
           echo "TITLE=$TITLE" >> $GITHUB_ENV
+
+      - name: Set package name
+        run: |
+          if [ -n "${{ github.event.inputs.package_suffix }}" ]; then
+            NEW_PACKAGE="net.devtrends.webtosdk.${{ github.event.inputs.package_suffix }}"
+            sed -i "s|applicationId \"net.devtrends.webtoapk\"|applicationId \"$NEW_PACKAGE\"|g" android-webview-app/app/build.gradle
+          fi
 
       - name: Prepare project
         run: |

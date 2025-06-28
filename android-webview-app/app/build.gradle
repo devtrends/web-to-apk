@@ -21,8 +21,18 @@ android {
       targetCompatibility JavaVersion.VERSION_17
     }
 
+    signingConfigs {
+      release {
+        storeFile file("personalUse.keystore")
+          storePassword "personal"
+          keyAlias "personalUse"
+          keyPassword "personal"
+      }
+    }
+
     buildTypes {
         release {
+            signingConfig signingConfigs.release
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }

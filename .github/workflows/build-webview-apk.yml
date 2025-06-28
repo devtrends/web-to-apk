@@ -44,6 +44,9 @@ jobs:
           cd android-webview-app
           gradle assembleRelease
 
+      - name: List files
+        run: ls -la
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:

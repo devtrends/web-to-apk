@@ -13,6 +13,14 @@ class MainActivity : AppCompatActivity() {
         val webView = findViewById<WebView>(R.id.webview)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
+
+        // Configure CookieManager
+        val cookieManager = CookieManager.getInstance()
+        cookieManager.setAcceptCookie(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+          cookieManager.setAcceptThirdPartyCookies(webView, true)
+        }
+
         webView.webViewClient = WebViewClient()
         webView.loadUrl("https://example.com")
     }

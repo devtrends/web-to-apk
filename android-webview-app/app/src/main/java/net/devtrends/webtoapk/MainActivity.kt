@@ -3,7 +3,10 @@ package net.devtrends.webtoapk
 import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
 import android.webkit.CookieManager
+import android.webkit.DownloadListener
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
@@ -28,14 +31,12 @@ class MainActivity : AppCompatActivity() {
           cookieManager.setAcceptThirdPartyCookies(webView, true)
         }
         
-        webView.setDownloadListener(new DownloadListener() {
-          @Override
-          public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
-            Intent i = new Intent(Intent.ACTION_VIEW);
-            i.setData(Uri.parse(url));
-            startActivity(i);
+        webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+          val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = Uri.parse(url)
           }
-        });
+          startActivity(intent)
+        }
 
         webView.webViewClient = WebViewClient()
         webView.loadUrl("https://example.com")

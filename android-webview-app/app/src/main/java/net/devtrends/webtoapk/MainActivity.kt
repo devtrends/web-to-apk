@@ -27,6 +27,15 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
           cookieManager.setAcceptThirdPartyCookies(webView, true)
         }
+        
+        webView.setDownloadListener(new DownloadListener() {
+          @Override
+          public void onDownloadStart(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+            Intent i = new Intent(Intent.ACTION_VIEW);
+            i.setData(Uri.parse(url));
+            startActivity(i);
+          }
+        });
 
         webView.webViewClient = WebViewClient()
         webView.loadUrl("https://example.com")

@@ -1,14 +1,18 @@
+
 package net.devtrends.webtoapk
 
+import android.app.DownloadManager
+import android.content.Context
 import android.graphics.Color
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.content.Intent
-import android.net.Uri
+import android.os.Environment
 import android.webkit.CookieManager
-import android.webkit.DownloadListener
+import android.webkit.URLUtil
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -24,21 +28,29 @@ class MainActivity : AppCompatActivity() {
 
         webView.setBackgroundColor(Color.parseColor("#242424"))
 
-        // Configure CookieManager
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-          cookieManager.setAcceptThirdPartyCookies(webView, true)
+            cookieManager.setAcceptThirdPartyCookies(webView, true)
         }
-        
+
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
-          val intent = Intent(Intent.ACTION_VIEW).apply {
-            data = Uri.parse(url)
-          }
-          startActivity(intent)
+            val request = DownloadManager.Request(Uri.parse(url)).apply {
+                allowScanningByMediaScanner()
+                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+
+                val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
+                setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            }
+
+            val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            dm.enqueue(request)
+
+            Toast.makeText(applicationContext, "Downloading export...", Toast.LENGTH_SHORT).show()
         }
 
         webView.webViewClient = WebViewClient()
         webView.loadUrl("https://example.com")
     }
 }
+

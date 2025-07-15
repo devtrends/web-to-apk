@@ -35,13 +35,19 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
-            val request = DownloadManager.Request(Uri.parse(url)).apply {
-                allowScanningByMediaScanner()
-                setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+            val request = DownloadManager.Request(Uri.parse(url))
 
-                val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
-                setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            val cookies = cookieManager.getCookie(url)
+            if (cookies != null) {
+                request.addRequestHeader("Cookie", cookies)
             }
+
+            request.addRequestHeader("User-Agent", userAgent)
+            request.allowScanningByMediaScanner()
+            request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+
+            val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
+            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
 
             val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             dm.enqueue(request)

@@ -77,15 +77,6 @@ class MainActivity : AppCompatActivity() {
             super.onReceivedError(view, request, error)
             view?.loadUrl("file:///android_asset/no_internet.html")
           }
-
-          override fun onReceivedHttpError(
-            view: WebView?,
-            request: WebResourceRequest?,
-            errorResponse: WebResourceResponse?
-          ) {
-            super.onReceivedHttpError(view, request, errorResponse)
-            view?.loadUrl("file:///android_asset/no_internet.html")
-          }
         }
 
         webView.loadUrl("https://example.com")

@@ -6,11 +6,6 @@ on:
       url:
         description: 'URL to create APK for'
         required: true
-      package_suffix:
-        description: 'Package suffix (a unique value if you want to install multiple generated APKs on the same device)'
-        required: false
-        default: ''
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,15 +36,32 @@ jobs:
 
       - name: Set package name
         run: |
-          if [ -n "${{ github.event.inputs.package_suffix }}" ]; then
-            NEW_PACKAGE="net.devtrends.webtosdk.${{ github.event.inputs.package_suffix }}"
-            sed -i "s|applicationId \"net.devtrends.webtoapk\"|applicationId \"$NEW_PACKAGE\"|g" android-webview-app/app/build.gradle
+          URL="${{ github.event.inputs.target_url }}"
+          if [[ "$URL" != https://* ]]; then
+          echo "URL must start with https://"
+          exit 1
           fi
+
+          DOMAIN_WITHOUT_PREFIX="${URL#https://}"
+          IFS='.' read -ra PARTS <<< "$DOMAIN_WITHOUT_PREFIX"
+
+          # Reverse parts
+          REVERSED=""
+          for (( idx=${#PARTS[@]}-1 ; idx>=0 ; idx-- )) ; do
+          if [ -z "$REVERSED" ]; then
+          REVERSED="${PARTS[idx]}"
+          else
+          REVERSED="$REVERSED.${PARTS[idx]}"
+          fi
+          done
+
+          sed -i "s|applicationId \"net.devtrends.webtoapk\"|applicationId \"$REVERSED\"|g" android-webview-app/app/build.gradle
 
       - name: Prepare project
         run: |
           cd android-webview-app
           sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/java/net/devtrends/webtoapk/MainActivity.kt
+          sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/assets/no_internet.html
           sed -i "s|WebToAPK|$TITLE|g" app/src/main/res/values/strings.xml
 
       - name: Build release APK

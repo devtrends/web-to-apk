@@ -12,6 +12,9 @@ import android.webkit.CookieManager
 import android.webkit.URLUtil
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebResourceRequest
+import android.webkit.WebResourceError
+import android.webkit.WebResourceResponse
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 
@@ -46,7 +49,17 @@ class MainActivity : AppCompatActivity() {
             request.allowScanningByMediaScanner()
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
 
-            val fileName = URLUtil.guessFileName(url, contentDisposition, mimetype)
+            val fileName = if (contentDisposition != null && contentDisposition.contains("filename")) {
+              var result = contentDisposition.substringAfter("filename=", "")
+              result = result.trim('"', '\'', ';', ' ')
+              if (result.contains("UTF-8''")) {
+                result = result.substringAfter("UTF-8''")
+              }
+              result
+            } else {
+              URLUtil.guessFileName(url, contentDisposition, mimetype)
+            }
+
             request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
 
             val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
@@ -55,7 +68,26 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(applicationContext, "Downloading export...", Toast.LENGTH_SHORT).show()
         }
 
-        webView.webViewClient = WebViewClient()
+        webView.webViewClient = object : WebViewClient() {
+          override fun onReceivedError(
+            view: WebView?,
+            request: WebResourceRequest?,
+            error: WebResourceError?
+          ) {
+            super.onReceivedError(view, request, error)
+            view?.loadUrl("file:///android_asset/no_internet.html")
+          }
+
+          override fun onReceivedHttpError(
+            view: WebView?,
+            request: WebResourceRequest?,
+            errorResponse: WebResourceResponse?
+          ) {
+            super.onReceivedHttpError(view, request, errorResponse)
+            view?.loadUrl("file:///android_asset/no_internet.html")
+          }
+        }
+
         webView.loadUrl("https://example.com")
     }
 }

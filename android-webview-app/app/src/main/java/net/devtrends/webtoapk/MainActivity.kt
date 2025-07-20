@@ -36,7 +36,6 @@ class MainActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             cookieManager.setAcceptThirdPartyCookies(webView, true)
         }
-        cookieManager.flush()
 
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
             val request = DownloadManager.Request(Uri.parse(url))
@@ -70,6 +69,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.webViewClient = object : WebViewClient() {
+          override fun onPageFinished(view: WebView?, url: String?) {
+            super.onPageFinished(view, url)
+            CookieManager.getInstance().flush()
+          }
+
           override fun onReceivedError(
             view: WebView?,
             request: WebResourceRequest?,

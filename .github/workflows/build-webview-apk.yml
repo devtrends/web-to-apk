@@ -36,7 +36,7 @@ jobs:
 
       - name: Set package name
         run: |
-          URL="${{ github.event.inputs.target_url }}"
+          URL="${{ github.event.inputs.url }}"
           if [[ "$URL" != https://* ]]; then
           echo "URL must start with https://"
           exit 1

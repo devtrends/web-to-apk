@@ -86,5 +86,15 @@ class MainActivity : AppCompatActivity() {
 
         webView.loadUrl("https://example.com")
     }
+
+    override fun onPause() {
+      super.onPause()
+      CookieManager.getInstance().flush()
+    }
+
+    override fun onStop() {
+      super.onStop()
+      CookieManager.getInstance().flush()
+    }
 }
 

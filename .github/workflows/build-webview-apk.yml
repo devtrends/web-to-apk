@@ -43,6 +43,9 @@ jobs:
           fi
 
           DOMAIN_WITHOUT_PREFIX="${URL#https://}"
+
+          DOMAIN_WITHOUT_PREFIX="${DOMAIN_WITHOUT_PREFIX%/}"
+
           IFS='.' read -ra PARTS <<< "$DOMAIN_WITHOUT_PREFIX"
 
           # Reverse parts

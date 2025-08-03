@@ -1,5 +1,5 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.WebToApk" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="android:windowSplashScreenBackground">#242424</item>
+        <item name="android:windowSplashScreenBackground">@color/bg</item>
     </style>
 </resources>

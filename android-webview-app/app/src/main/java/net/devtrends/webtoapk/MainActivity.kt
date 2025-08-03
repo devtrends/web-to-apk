@@ -17,19 +17,20 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceResponse
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        window.statusBarColor = Color.parseColor("#242424")
+        window.statusBarColor = ContextCompat.getColor(this, R.color.bg)
 
         val webView = findViewById<WebView>(R.id.webview)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
 
-        webView.setBackgroundColor(Color.parseColor("#242424"))
+        webView.setBackgroundResource(R.color.bg)
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)

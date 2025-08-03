@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
 
-        webView.setBackgroundolor(ContextCompat.getColor(this, R.color.bg))
+        webView.setBackgroundColor(ContextCompat.getColor(this, R.color.bg))
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)

@@ -6,6 +6,10 @@ on:
       url:
         description: 'URL to create APK for'
         required: true
+      bg_color:
+        description: 'Hex color for app background (e.g. #123456)'
+        required: true
+        default: '#242424'
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -66,6 +70,7 @@ jobs:
           sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/java/net/devtrends/webtoapk/MainActivity.kt
           sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/assets/no_internet.html
           sed -i "s|WebToAPK|$TITLE|g" app/src/main/res/values/strings.xml
+          sed -i 's|<color name="bg">.*</color>|<color name="bg">${{ inputs.bg_color }}</color>|' app/src/main/res/values/colors.xml
 
       - name: Build release APK
         run: |

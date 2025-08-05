@@ -1,8 +1,12 @@
-name: Build WebView APK
+name: ${{ inputs.jobId }}
 
 on:
   workflow_dispatch:
     inputs:
+      jobId:
+        description: "Unique Job Id"
+        required: true
+        type: string
       url:
         description: 'URL to create APK for'
         required: true

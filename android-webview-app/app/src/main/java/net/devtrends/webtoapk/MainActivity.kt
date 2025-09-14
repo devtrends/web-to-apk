@@ -20,13 +20,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
+   
+    private lateinit var webView: WebView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         window.statusBarColor = ContextCompat.getColor(this, R.color.bg)
 
-        val webView = findViewById<WebView>(R.id.webview)
+        webView = findViewById<WebView>(R.id.webview)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
 
@@ -86,6 +89,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.loadUrl("https://example.com")
+    }
+
+    override fun onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            super.onBackPressed()
+        }
     }
 
     override fun onPause() {

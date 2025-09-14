@@ -88,6 +88,14 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl("https://example.com")
     }
 
+    override fun onBackPressed() {
+        if (webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            super.onBackPressed()
+        }
+    }
+
     override fun onPause() {
       super.onPause()
       CookieManager.getInstance().flush()

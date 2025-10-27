@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         window.statusBarColor = ContextCompat.getColor(this, R.color.bg)
+        window.navigationBarColor = ContextCompat.getColor(this, R.color.bg)
 
         webView = findViewById<WebView>(R.id.webview)
         webView.settings.javaScriptEnabled = true

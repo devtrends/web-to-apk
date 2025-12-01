@@ -5,6 +5,12 @@ on:
       url:
         description: 'URL to create APK for'
         required: true
+      name:
+        description: 'App Name'
+        required: true
+      package_name:
+        description: 'Package Name'
+        required: true
       bg_color:
         description: 'Hex color for app background (e.g. #123456)'
         required: true
@@ -28,56 +34,22 @@ jobs:
         with:
           cache-disabled: true
 
-      - name: Fetch page title
-        run: |
-          URL="${{ github.event.inputs.url }}"
-          TITLE=$(curl -sL "$URL" | grep -o '<title[^>]*>.*</title>' | sed -E 's/<\/?title>//g' | head -n 1 | xargs)
-          if [ -z "$TITLE" ]; then
-            TITLE="WebToAPK"
-          fi
-          echo "TITLE=$TITLE" >> $GITHUB_ENV
-
       - name: Set package name
         run: |
-          URL="${{ github.event.inputs.url }}"
-          if [[ "$URL" != https://* ]]; then
-          echo "URL must start with https://"
-          exit 1
-          fi
-
-          DOMAIN_WITHOUT_PREFIX="${URL#https://}"
-
-          DOMAIN_WITHOUT_PREFIX="${DOMAIN_WITHOUT_PREFIX%/}"
-
-          IFS='.' read -ra PARTS <<< "$DOMAIN_WITHOUT_PREFIX"
-
-          # Reverse parts
-          REVERSED=""
-          for (( idx=${#PARTS[@]}-1 ; idx>=0 ; idx-- )) ; do
-          if [ -z "$REVERSED" ]; then
-          REVERSED="${PARTS[idx]}"
-          else
-          REVERSED="$REVERSED.${PARTS[idx]}"
-          fi
-          done
-
-          sed -i "s|applicationId \"net.devtrends.webtoapk\"|applicationId \"$REVERSED\"|g" android-webview-app/app/build.gradle
+          sed -i "s|applicationId \"net.devtrends.webtoapk\"|applicationId \"${{ inputs.package_name }}\"|g" android-webview-app/app/build.gradle
 
       - name: Prepare project
         run: |
           cd android-webview-app
-          sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/java/net/devtrends/webtoapk/MainActivity.kt
-          sed -i "s|https://example.com|${{ github.event.inputs.url }}|g" app/src/main/assets/no_internet.html
-          sed -i "s|WebToAPK|$TITLE|g" app/src/main/res/values/strings.xml
+          sed -i "s|https://example.com|${{ inputs.url }}|g" app/src/main/java/net/devtrends/webtoapk/MainActivity.kt
+          sed -i "s|https://example.com|${{ inputs.url }}|g" app/src/main/assets/no_internet.html
+          sed -i "s|WebToAPK|${{ github.event.inputs.name }}|g" app/src/main/res/values/strings.xml
           sed -i 's|<color name="bg">.*</color>|<color name="bg">${{ inputs.bg_color }}</color>|' app/src/main/res/values/colors.xml
 
       - name: Build release APK
         run: |
           cd android-webview-app
           gradle assembleRelease
-
-      - name: List files
-        run: ls -la
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4

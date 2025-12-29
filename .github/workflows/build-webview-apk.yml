@@ -11,6 +11,9 @@ on:
       package_name:
         description: 'Package Name'
         required: true
+      vector_xml:
+        description: "Vector drawable XML"
+        required: true
       bg_color:
         description: 'Hex color for app background (e.g. #123456)'
         required: true
@@ -45,6 +48,12 @@ jobs:
           sed -i "s|https://example.com|${{ inputs.url }}|g" app/src/main/assets/no_internet.html
           sed -i "s|WebToAPK|${{ github.event.inputs.name }}|g" app/src/main/res/values/strings.xml
           sed -i 's|<color name="bg">.*</color>|<color name="bg">${{ inputs.bg_color }}</color>|' app/src/main/res/values/colors.xml
+
+      - name: Write vector icon
+        run: |
+          cat << 'EOF' > app/src/main/res/drawable/fg.xml
+          ${{ inputs.vector_xml }}
+          EOF
 
       - name: Build release APK
         run: |

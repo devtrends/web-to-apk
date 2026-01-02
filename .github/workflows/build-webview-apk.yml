@@ -51,7 +51,7 @@ jobs:
 
       - name: Write vector icon
         run: |
-          cat << 'EOF' > app/src/main/res/drawable/fg.xml
+          cat << 'EOF' > android-webview-app/app/src/main/res/drawable/fg.xml
           ${{ inputs.vector_xml }}
           EOF
 

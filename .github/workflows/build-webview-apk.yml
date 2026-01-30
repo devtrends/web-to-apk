@@ -3,21 +3,21 @@ on:
   workflow_dispatch:
     inputs:
       url:
-        description: 'URL to create APK for'
+        description: "URL to create APK for"
         required: true
       name:
-        description: 'App Name'
+        description: "App Name"
         required: true
       package_name:
-        description: 'Package Name'
+        description: "Package Name"
         required: true
-      vector_xml:
-        description: "Vector drawable XML"
+      icon_url:
+        description: "PNG icon URL"
         required: true
       bg_color:
-        description: 'Hex color for app background (e.g. #123456)'
+        description: "Hex color for app background (e.g. #123456)"
         required: true
-        default: '#242424'
+        default: "#242424"
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -29,7 +29,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: "temurin"
           java-version: 17
 
       - name: Setup Gradle
@@ -49,11 +49,41 @@ jobs:
           sed -i "s|WebToAPK|${{ github.event.inputs.name }}|g" app/src/main/res/values/strings.xml
           sed -i 's|<color name="bg">.*</color>|<color name="bg">${{ inputs.bg_color }}</color>|' app/src/main/res/values/colors.xml
 
-      - name: Write vector icon
+      - name: Install ImageMagick
         run: |
-          cat << 'EOF' > android-webview-app/app/src/main/res/drawable/fg.xml
-          ${{ inputs.vector_xml }}
-          EOF
+          sudo apt-get update
+          sudo apt-get install -y imagemagick
+
+      - name: Download and process icon
+        run: |
+          # Download the icon
+          curl -L -o /tmp/icon.png "${{ inputs.icon_url }}"
+
+          # Verify it's a PNG
+          if ! file /tmp/icon.png | grep -q "PNG image data"; then
+            echo "Error: Downloaded file is not a PNG image"
+            exit 1
+          fi
+
+          # Create mipmap directories
+          mkdir -p android-webview-app/app/src/main/res/mipmap-mdpi
+          mkdir -p android-webview-app/app/src/main/res/mipmap-hdpi
+          mkdir -p android-webview-app/app/src/main/res/mipmap-xhdpi
+          mkdir -p android-webview-app/app/src/main/res/mipmap-xxhdpi
+          mkdir -p android-webview-app/app/src/main/res/mipmap-xxxhdpi
+
+          # Convert to appropriate sizes for Android foreground images
+          # Adaptive icons: foreground layer should be 108x108dp
+          # mdpi = 108px, hdpi = 162px, xhdpi = 216px, xxhdpi = 324px, xxxhdpi = 432px
+          convert /tmp/icon.png -resize 108x108 android-webview-app/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png
+          convert /tmp/icon.png -resize 162x162 android-webview-app/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png
+          convert /tmp/icon.png -resize 216x216 android-webview-app/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png
+          convert /tmp/icon.png -resize 324x324 android-webview-app/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png
+          convert /tmp/icon.png -resize 432x432 android-webview-app/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png
+
+          # Remove old vector drawable files
+          rm -f android-webview-app/app/src/main/res/drawable/fg.xml
+          rm -f android-webview-app/app/src/main/res/drawable/fg_scaled.xml
 
       - name: Build release APK
         run: |

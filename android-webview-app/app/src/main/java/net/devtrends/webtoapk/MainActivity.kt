@@ -3,6 +3,7 @@ package net.devtrends.webtoapk
 
 import android.app.DownloadManager
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -20,7 +21,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
-   
+    private val homeUrl = "https://example.com"
+    private val homeUri = Uri.parse(homeUrl)
     private lateinit var webView: WebView
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,6 +76,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.webViewClient = object : WebViewClient() {
+          override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+            val url = request?.url ?: return false
+            if (isExternalUrl(url)) {
+              startActivity(Intent(Intent.ACTION_VIEW, url))
+              return true
+            }
+            return false
+          }
+
           override fun onPageFinished(view: WebView?, url: String?) {
             super.onPageFinished(view, url)
             CookieManager.getInstance().flush()
@@ -89,7 +100,7 @@ class MainActivity : AppCompatActivity() {
           }
         }
 
-        webView.loadUrl("https://example.com")
+        webView.loadUrl(homeUrl)
     }
 
     override fun onBackPressed() {
@@ -109,5 +120,13 @@ class MainActivity : AppCompatActivity() {
       super.onStop()
       CookieManager.getInstance().flush()
     }
-}
 
+    private fun isExternalUrl(url: Uri): Boolean {
+        if (!url.scheme.equals("http", ignoreCase = true) &&
+            !url.scheme.equals("https", ignoreCase = true)) {
+            return true
+        }
+
+        return url.host != homeUri.host || url.scheme != homeUri.scheme
+    }
+}

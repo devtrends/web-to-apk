@@ -4,12 +4,13 @@ package net.devtrends.webtoapk
 import android.app.DownloadManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
+import android.util.Base64
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.webkit.CookieManager
+import android.webkit.JavascriptInterface
 import android.webkit.URLUtil
 import android.webkit.WebView
 import android.webkit.WebViewClient
@@ -19,6 +20,9 @@ import android.webkit.WebResourceResponse
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import java.io.File
+import java.io.FileOutputStream
+import org.json.JSONObject
 
 class MainActivity : AppCompatActivity() {
     private val homeUrl = "https://example.com"
@@ -45,6 +49,39 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+            if (url.startsWith("blob:")) {
+                val fileName = if (contentDisposition != null && contentDisposition.contains("filename")) {
+                    var result = contentDisposition.substringAfter("filename=", "")
+                    result = result.trim('"', '\'', ';', ' ')
+                    if (result.contains("UTF-8''")) {
+                        result = result.substringAfter("UTF-8''")
+                    }
+                    result
+                } else {
+                    URLUtil.guessFileName(url, contentDisposition, mimetype)
+                }
+
+                webView.post {
+                    val script = """
+                        (async function() {
+                          const response = await fetch(${JSONObject.quote(url)});
+                          const blob = await response.blob();
+                          const reader = new FileReader();
+                          reader.onloadend = function() {
+                            Android.saveBlob(reader.result, ${JSONObject.quote(fileName)}, ${JSONObject.quote(mimetype ?: "application/octet-stream")});
+                          };
+                          reader.readAsDataURL(blob);
+                        })();
+                        """.trimIndent()
+                    webView.evaluateJavascript(
+                        script,
+                        null
+                    )
+                }
+                Toast.makeText(applicationContext, "Downloading export...", Toast.LENGTH_SHORT).show()
+                return@setDownloadListener
+            }
+
             val request = DownloadManager.Request(Uri.parse(url))
 
             val cookies = cookieManager.getCookie(url)
@@ -67,13 +104,39 @@ class MainActivity : AppCompatActivity() {
               URLUtil.guessFileName(url, contentDisposition, mimetype)
             }
 
-            request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName)
+            } else {
+                request.setDestinationInExternalFilesDir(this@MainActivity, Environment.DIRECTORY_DOWNLOADS, fileName)
+            }
 
             val dm = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
             dm.enqueue(request)
 
             Toast.makeText(applicationContext, "Downloading export...", Toast.LENGTH_SHORT).show()
         }
+        webView.addJavascriptInterface(object {
+            @JavascriptInterface
+            fun saveBlob(dataUrl: String, fileName: String, mimeType: String) {
+                val commaIndex = dataUrl.indexOf(',')
+                if (commaIndex == -1) return
+
+                val data = Base64.decode(dataUrl.substring(commaIndex + 1), Base64.DEFAULT)
+                val dir = getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS) ?: filesDir
+                dir.mkdirs()
+
+                val outFile = File(dir, fileName.ifBlank { "download" })
+                FileOutputStream(outFile).use { it.write(data) }
+
+                runOnUiThread {
+                    Toast.makeText(
+                        applicationContext,
+                        "Saved ${outFile.name}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        }, "Android")
 
         webView.webViewClient = object : WebViewClient() {
           override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -95,8 +158,9 @@ class MainActivity : AppCompatActivity() {
             request: WebResourceRequest?,
             error: WebResourceError?
           ) {
-            super.onReceivedError(view, request, error)
-            view?.loadUrl("file:///android_asset/no_internet.html")
+              if (request.isForMainFrame) {
+                view?.loadUrl("file:///android_asset/no_internet.html")
+              }
           }
         }
 
